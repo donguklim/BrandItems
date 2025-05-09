@@ -1,6 +1,7 @@
 package com.example.item.infrastructure.database
 
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object SQLDatabase {
     fun connect() {
@@ -10,5 +11,12 @@ object SQLDatabase {
             driver = "org.h2.Driver",
             password = "",
         )
+    }
+
+    fun createTables() {
+        transaction {
+            addLogger(StdOutSqlLogger)
+            SchemaUtils.create(Brands, BrandTotalPrice, Items)
+        }
     }
 }
