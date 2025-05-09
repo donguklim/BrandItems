@@ -6,7 +6,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.innerJoin
 
 
 @Serializable
@@ -18,19 +17,19 @@ data class CategoryBrandData(val category: String, val brandName: String, val pr
 
 class ExposedPointRepository {
 
-    suspend fun getCheapestInEachCategory(): Map<Int, BrandData> {
+    suspend fun getCategoryMinPrice(): Map<Int, BrandData> {
         val categoryGroupedMap: Map<Int, BrandData> = transaction {
             val minPrice = Items.price.min().alias("min_price")
-            val mimPricePerCategory = Items.select(
+            val minPricePerCategory = Items.select(
                 Items.categoryId,
                 minPrice
             ).groupBy(Items.categoryId).alias("category_min_price")
 
-            mimPricePerCategory.join(
+            minPricePerCategory.join(
                 Items,
                 JoinType.INNER,
                 additionalConstraint = {
-                    (mimPricePerCategory[Items.categoryId] eq Items.categoryId) and (minPrice eq Items.price)
+                    (minPricePerCategory[Items.categoryId] eq Items.categoryId) and (minPrice eq Items.price)
                 }
             ).select(
                 Items.categoryId,
@@ -48,6 +47,60 @@ class ExposedPointRepository {
             ).associateBy(
                 keySelector = { it[Items.categoryId] },
                 valueTransform = { BrandData(it[Brands.name], it[Items.price]) }
+            )
+        }
+        return categoryGroupedMap
+    }
+
+    suspend fun getCategoryMaxPrice(): Map<Int, BrandData> {
+        val categoryGroupedMap: Map<Int, BrandData> = transaction {
+            val maxPrice = Items.price.max().alias("max_price")
+            val maxPricePerCategory = Items.select(
+                Items.categoryId,
+                maxPrice
+            ).groupBy(Items.categoryId).alias("category_max_price")
+
+            maxPricePerCategory.join(
+                Items,
+                JoinType.INNER,
+                additionalConstraint = {
+                    (maxPricePerCategory[Items.categoryId] eq Items.categoryId) and (maxPrice eq Items.price)
+                }
+            ).select(
+                Items.categoryId,
+                Items.price,
+                Items.brandId,
+            ).alias("category_max_brand").join(
+                Brands,
+                JoinType.INNER,
+                onColumn=Items.brandId,
+                otherColumn=Brands.id
+            ).select(
+                Items.categoryId,
+                Items.price,
+                Brands.name
+            ).associateBy(
+                keySelector = { it[Items.categoryId] },
+                valueTransform = { BrandData(it[Brands.name], it[Items.price]) }
+            )
+        }
+        return categoryGroupedMap
+    }
+
+    suspend fun getBrandData(brandName: String): Map<Int, Int> {
+        val categoryGroupedMap: Map<Int, Int> = transaction {
+            val minPrice = Items.price.min().alias("min_price")
+
+            val minPricePerCategory = (Items innerJoin Brands).select(
+                Items.categoryId,
+                minPrice
+            ).where(
+                Brands.name eq brandName
+            ).groupBy(Items.categoryId)
+
+            minPricePerCategory.associateBy(
+                keySelector = { it[Items.categoryId] },
+                valueTransform = { it[minPrice]!!  }
             )
         }
         return categoryGroupedMap
