@@ -147,6 +147,41 @@ class ExposedPointRepository {
         return Pair(true, modifiedData)
     }
 
+    suspend fun deleteItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
+
+        val brandId = Brands.select(
+            Brands.id
+        ).where(Brands.name eq brandName).singleOrNull()?.get(Brands.id)?.value
+
+        if(brandId == null){
+            return Pair(false,mapOf())
+        }
+
+        Items.deleteIgnoreWhere{
+            (Items.brandId eq brandId) and (Items.price eq price) and (Items.categoryId eq categoryId)
+        }
+        val brandData = getBrandData(brandId)
+
+        brandData[categoryId]?.let {
+            if(price >= it){
+                return Pair(false,brandData)
+            }
+        }
+
+        val priceSum = brandData.values.sum()
+
+        BrandTotalPrice.insertIgnore {
+            it[BrandTotalPrice.brandId] = brandId
+            it[BrandTotalPrice.price] = priceSum
+        }
+
+        BrandTotalPrice.update({BrandTotalPrice.brandId eq brandId}) {
+            it[BrandTotalPrice.price] = priceSum
+        }
+
+        return Pair(true, brandData)
+    }
+
     suspend fun getCheapestBrand(): Triple<Long, String, Int>{
         (BrandTotalPrice innerJoin Brands).select(
             Brands.id,
