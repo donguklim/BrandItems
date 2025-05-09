@@ -39,7 +39,7 @@ object Items : LongIdTable("items") {
     val brandCategoryPrice =
         index(
             "brand_category_price",
-            false,
+            true,
             *arrayOf(brandId, categoryId, price),
         )
 }

@@ -10,10 +10,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 @Serializable
 data class BrandData(val id: Long, val brandName: String, val price: Int)
 
-@Serializable
-data class CategoryBrandData(val category: String, val brandName: String, val price: Int)
-
-
 class ExposedPointRepository {
 
     suspend fun getCategoryMinPrice(): Map<Int, BrandData> {
@@ -114,7 +110,7 @@ class ExposedPointRepository {
         return categoryGroupedMap
     }
 
-    suspend fun updateItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
+    suspend fun createItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
 
         Brands.insertIgnore { it[Brands.name] = brandName }
 
@@ -123,7 +119,7 @@ class ExposedPointRepository {
         ).where(Brands.name eq brandName).single()[Brands.id].value
 
         val brandData = getBrandData(brandId)
-        Items.insert{
+        Items.insertIgnore{
             it[Items.brandId] = brandId
             it[Items.price] = price
             it[Items.categoryId] = categoryId

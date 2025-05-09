@@ -149,18 +149,16 @@ class ExposedRepoTests {
         val categoryId = ItemCategory.PANTS.value
         val repo = ExposedPointRepository()
 
+        var isTotalUpdated = false
+        var brandData: Map<Int, Int> = mapOf()
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
-                val (isTotalUpdated, brandData) = repo.updateItem(
-                    brandName,
-                    categoryId,
-                    price,
-                )
-
-                assertEquals(price, brandData[categoryId])
+                val ret = repo.createItem(brandName,  categoryId, price)
+                brandData = ret.second
             }
         }
+        assertEquals(price, brandData[categoryId])
         transaction {
             val totalPrice = (BrandTotalPrice innerJoin  Brands).select(
                 BrandTotalPrice.price
@@ -217,7 +215,7 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
-                val ret = repo.updateItem(
+                val ret = repo.createItem(
                     brandName,
                     categoryId,
                     (minPrices[categoryId] ?: 0) + 100,
@@ -235,7 +233,7 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
-                val ret = repo.updateItem(
+                val ret = repo.createItem(
                     brandName,
                     categoryId,
                     (minPrices[categoryId] ?: 0) - 5,
