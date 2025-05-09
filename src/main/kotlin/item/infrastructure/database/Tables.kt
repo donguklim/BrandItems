@@ -20,13 +20,13 @@ object Brands : LongIdTable("brands") {
 
 
 object BrandTotalPrice : LongIdTable("brandTotalPrice") {
-    val brandId = reference("brand_id", Brands.id, onDelete = ReferenceOption.CASCADE)
+    val brandId = reference("brand_id", Brands.id).uniqueIndex()
     val price = integer("price").index()
 }
 
 
 object Items : LongIdTable("items") {
-    val brandId = reference("brand_id", Brands.id, onDelete = ReferenceOption.CASCADE)
+    val brandId = reference("brand_id", Brands.id)
     val categoryId = integer("category_id")
     val price = integer("price")
 

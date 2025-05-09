@@ -5,8 +5,6 @@ import com.example.item.infrastructure.database.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.greater
-import org.jetbrains.exposed.sql.transactions.transaction
 
 
 @Serializable
@@ -95,4 +93,56 @@ class ExposedPointRepository {
 
         return categoryGroupedMap
     }
+
+    suspend fun getBrandData(brandId: Long): Map<Int, Int> {
+        val minPrice = Items.price.min().alias("min_price")
+
+        val minPricePerCategory = (Items innerJoin Brands).select(
+            Items.categoryId,
+            minPrice
+        ).where(
+            Brands.id eq brandId
+        ).groupBy(Items.categoryId)
+
+        val categoryGroupedMap: Map<Int, Int> = minPricePerCategory.associateBy(
+            keySelector = { it[Items.categoryId] },
+            valueTransform = { it[minPrice]!!  }
+        )
+
+        return categoryGroupedMap
+    }
+
+    suspend fun updateItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
+
+        Brands.insertIgnore { it[Brands.name] = brandName }
+
+        val brandId = Brands.select(
+            Brands.id
+        ).where(Brands.name eq brandName).single()[Brands.id].value
+
+        val brandData = getBrandData(brandId)
+        Items.insert{
+            it[Items.brandId] = brandId
+            it[Items.price] = price
+            it[Items.categoryId] = categoryId
+        }
+        brandData[categoryId]?.let {
+            if(price < it){
+                return Pair(false,brandData)
+            }
+        }
+
+        val modifiedData = brandData.toMutableMap()
+        modifiedData[categoryId] = price
+
+        val priceSum = modifiedData.values.sum()
+
+        BrandTotalPrice.insertIgnore {
+            it[BrandTotalPrice.brandId] = brandId
+            it[BrandTotalPrice.price] = priceSum
+        }
+
+        return Pair(true, modifiedData)
+    }
+    
 }
