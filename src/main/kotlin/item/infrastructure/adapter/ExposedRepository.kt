@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 
 @Serializable
-data class BrandData(val brandName: String, val price: Int)
+data class BrandData(val id: Long, val brandName: String, val price: Int)
 
 @Serializable
 data class CategoryBrandData(val category: String, val brandName: String, val price: Int)
@@ -37,10 +37,11 @@ class ExposedPointRepository {
         ).select(
             Items.categoryId,
             Items.price,
-            Brands.name
+            Brands.name,
+            Brands.id
         ).associateBy(
             keySelector = { it[Items.categoryId] },
-            valueTransform = { BrandData(it[Brands.name], it[Items.price]) }
+            valueTransform = { BrandData(it[Brands.id].value, it[Brands.name], it[Items.price]) }
         )
 
         return categoryGroupedMap
@@ -67,10 +68,11 @@ class ExposedPointRepository {
         ).select(
             Items.categoryId,
             Items.price,
-            Brands.name
+            Brands.name,
+            Brands.id
         ).associateBy(
             keySelector = { it[Items.categoryId] },
-            valueTransform = { BrandData(it[Brands.name], it[Items.price]) }
+            valueTransform = { BrandData(it[Brands.id].value, it[Brands.name], it[Items.price]) }
         )
 
         return categoryGroupedMap
@@ -127,7 +129,7 @@ class ExposedPointRepository {
             it[Items.categoryId] = categoryId
         }
         brandData[categoryId]?.let {
-            if(price < it){
+            if(price >= it){
                 return Pair(false,brandData)
             }
         }
@@ -142,7 +144,22 @@ class ExposedPointRepository {
             it[BrandTotalPrice.price] = priceSum
         }
 
+        BrandTotalPrice.update({BrandTotalPrice.brandId eq brandId}) {
+            it[BrandTotalPrice.price] = priceSum
+        }
+
         return Pair(true, modifiedData)
     }
-    
+
+    suspend fun getCheapestBrand(): Triple<Long, String, Int>{
+        (BrandTotalPrice innerJoin Brands).select(
+            Brands.id,
+            Brands.name,
+            BrandTotalPrice.price
+        ).orderBy(BrandTotalPrice.price).first().let {
+            return Triple(it[Brands.id].value, it[Brands.name], it[BrandTotalPrice.price])
+        }
+
+    }
+
 }

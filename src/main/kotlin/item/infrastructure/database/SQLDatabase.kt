@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object SQLDatabase {
     fun connect() {
         Database.connect(
-            url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1",
+            url = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=MYSQL",
             user = "root",
             driver = "org.h2.Driver",
             password = "",
