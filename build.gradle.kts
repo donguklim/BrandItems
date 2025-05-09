@@ -2,6 +2,7 @@ val exposed_version: String by project
 val h2_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
+val kotlinx_coroutines_version: String by project
 
 plugins {
     kotlin("jvm") version "2.1.10"
@@ -35,4 +36,11 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
+    // Lettuce Redis Locking
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${kotlinx_coroutines_version}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:${kotlinx_coroutines_version}")
+    implementation("io.lettuce:lettuce-core:6.6.0.RELEASE")
+
 }

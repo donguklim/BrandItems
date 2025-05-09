@@ -1,11 +1,12 @@
 package com.example.item.infrastructure.adapter
 
 import com.example.item.infrastructure.database.*
+import com.example.item.infrastructure.database.SQLDatabase
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
-import com.example.item.infrastructure.database.SQLDatabase
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -14,8 +15,7 @@ import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+
 
 
 class ExposedRepoTests {
