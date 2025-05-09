@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env.docker
+    depends_on:
+      redis_cache:
+        condition: service_started
+    links:
+      - redis_cache
+
+  redis_cache:
+    image: redis:8.0.0-alpine
+    env_file:
+      - .env.docker
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+  test:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    command: gradle test
+    env_file:
+      - .env.docker.test
+    depends_on:
+      - test_redis_cache
+    links:
+      - test_redis_cache
+
+  test_redis_cache:
+    profiles: ["test"]
+    image: redis:8.0.0-alpine
+    env_file:
+      - .env.docker.test
+    ports:
+      - '6379:6379'
+
+volumes:
+  redis_data:
