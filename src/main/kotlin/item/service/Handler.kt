@@ -66,6 +66,10 @@ class Handler(redisHost: String, redisPort: Int) {
         return categoryNames[categoryId]
     }
 
+    fun getCategoryNames(): List<String> {
+        return categoryIds.keys.toList()
+    }
+
     fun getCategoryId(category: String): Int? {
         return categoryIds[category]
     }
