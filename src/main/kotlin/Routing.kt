@@ -18,6 +18,9 @@ fun Application.configureRouting() {
         redisPort =(System.getenv("REDIS_PORT") ?: "6379").toInt()
     )
     routing {
+        get("/hello") {
+            call.respondText("Hello World!")
+        }
         get("/min-prices") {
 
             call.respond(handler.getMinPricePerCategory())
@@ -26,8 +29,8 @@ fun Application.configureRouting() {
 
             call.respond(handler.getBrandMinPrices())
         }
-        get("/min-max-price/{categoryName}") {
-            val name = call.parameters["categoryName"]
+        get("/min-max-price") {
+            val name = call.request.queryParameters["category"]
             if (name == null) {
                 call.respond(HttpStatusCode.BadRequest, "Null category name")
                 return@get
@@ -43,7 +46,8 @@ fun Application.configureRouting() {
                 return@get
             }
 
-            call.respond(handler.getCategoryMinMaxPrices(categoryId))
+            val ret = handler.getCategoryMinMaxPrices(categoryId)
+            call.respond(ret)
 
         }
 

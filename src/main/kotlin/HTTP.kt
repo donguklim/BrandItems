@@ -7,6 +7,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.plugins.swagger.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -25,7 +26,18 @@ fun Application.configureHTTP() {
             port = (System.getenv("REDIS_PORT") ?: "6379").toInt()
         }
     }
-
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader("MyCustomHeader")
+        anyHost() // @TODO: Don't do this in production if possible. Try to limit it.
+    }
+    install(ContentNegotiation) {
+        json()  // Enable JSON serialization
+    }
     routing {
         swaggerUI(path = "openapi")
     }

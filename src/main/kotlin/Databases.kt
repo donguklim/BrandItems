@@ -26,16 +26,6 @@ fun Application.configureDatabases() {
     // insert default data
     val brandNamesOrder = listOf("A", "B", "C", "D", "E", "F", "G", "H", "I")
 
-    val brandIds = transaction {
-        Brands.batchInsert(brandNamesOrder){
-            brand -> this[Brands.name] = brand
-        }
-        Brands.selectAll().orderBy(Brands.name, SortOrder.ASC).associate {
-            it[Brands.name] to it[Brands.id].value }
-    }
-
-    val brandIdsOrder = brandNamesOrder.map{name -> brandIds[name]!!}
-
     val categoryIdsOrder = (1..8).toList()
 
     val prices = listOf(
@@ -50,27 +40,37 @@ fun Application.configureDatabases() {
         11400,6700,3200,9500,2400,1700,1700,2400,
     )
 
-    val items : MutableList<Triple<Long, Int, Int>> = mutableListOf()
-    val brandTotalPrice = brandIdsOrder.associate {it to 0}.toMutableMap()
-    brandIdsOrder.forEachIndexed { index, brandId ->
-        val start = index * 8
-        categoryIdsOrder.forEachIndexed { categoryIdx, categoryId ->
-            items.add(
-                Triple(brandId, categoryId, prices[start + categoryIdx])
-            )
-            brandTotalPrice[brandId] = brandTotalPrice[brandId]!! +  prices[start + categoryIdx]
+    transaction {
+        Brands.batchInsert(brandNamesOrder){
+            brand -> this[Brands.name] = brand
         }
-    }
+        val brandIds = Brands.selectAll().orderBy(Brands.name, SortOrder.ASC).associate {
+            it[Brands.name] to it[Brands.id].value }
 
-    BrandTotalPrice.batchInsert(brandTotalPrice.entries) { item ->
-        this[BrandTotalPrice.brandId] = item.key
-        this[BrandTotalPrice.price] = item.value
-    }
+        val brandIdsOrder = brandNamesOrder.map{name -> brandIds[name]!!}
 
-    Items.batchInsert(items) { item ->
-        this[Items.brandId] = item.first
-        this[Items.categoryId] = item.second
-        this[Items.price] = item.third
+        val items : MutableList<Triple<Long, Int, Int>> = mutableListOf()
+        val brandTotalPrice = brandIdsOrder.associate {it to 0}.toMutableMap()
+        brandIdsOrder.forEachIndexed { index, brandId ->
+            val start = index * 8
+            categoryIdsOrder.forEachIndexed { categoryIdx, categoryId ->
+                items.add(
+                    Triple(brandId, categoryId, prices[start + categoryIdx])
+                )
+                brandTotalPrice[brandId] = brandTotalPrice[brandId]!! +  prices[start + categoryIdx]
+            }
+        }
+
+        BrandTotalPrice.batchInsert(brandTotalPrice.entries) { item ->
+            this[BrandTotalPrice.brandId] = item.key
+            this[BrandTotalPrice.price] = item.value
+        }
+
+        Items.batchInsert(items) { item ->
+            this[Items.brandId] = item.first
+            this[Items.categoryId] = item.second
+            this[Items.price] = item.third
+        }
     }
 
 }

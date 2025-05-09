@@ -109,8 +109,8 @@ class Handler(redisHost: String, redisPort: Int) {
         }
     }
 
-    suspend fun getCategoryMinMaxPrices(categoryId: Int) {
-        newSuspendedTransaction(Dispatchers.IO) {
+    suspend fun getCategoryMinMaxPrices(categoryId: Int): CategoryMinMaxPriceData {
+        return newSuspendedTransaction(Dispatchers.IO) {
             val minBrand = repo.getCategoryMinPrice()[categoryId]
             val maxBrand = repo.getCategoryMaxPrice()[categoryId]
 

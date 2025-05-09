@@ -4,9 +4,10 @@ info:
   description: "Application API"
   version: "1.0.0"
 servers:
-  - url: "http://0.0.0.0:8080"
+  - url: "http://localhost:8080"
+schemes: ["http", "https"]
 paths:
-  /:
+  /hello:
     get:
       description: "Hello World!"
       responses:
@@ -14,6 +15,55 @@ paths:
           description: "OK"
           content:
             text/plain:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello World!"
+
+  /min-prices:
+    get:
+      description: "카테고리 별 최저가격 브랜드와 상품 가격, 총액을 조회하는 API"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello World!"
+  /brand-min-prices:
+    get:
+      description: "단일 브랜드로 모든 카테고리 상품을 구매할 때 최저가격에 판매하는 브랜드와 카테고리의 상품가격, 총액을
+조회하는 API"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello World!"
+
+  /min-max-price:
+    get:
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: "string"
+          required: true
+          description: "카테고리 이름"
+      description: "카테고리 이름으로 최저, 최고 가격 브랜드와 상품 가격을 조회하는 API"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
               schema:
                 type: "string"
               examples:
