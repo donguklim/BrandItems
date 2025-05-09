@@ -22,13 +22,12 @@ repositories {
 
 dependencies {
     implementation("io.ktor:ktor-server-core")
-    implementation("io.ktor:ktor-server-swagger")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
-    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:${exposed_version}")
     implementation("com.h2database:h2:$h2_version")
+    implementation("io.ktor:ktor-server-swagger")
     implementation("io.ktor:ktor-server-netty")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
