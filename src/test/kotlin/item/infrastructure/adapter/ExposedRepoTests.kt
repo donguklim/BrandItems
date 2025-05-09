@@ -154,7 +154,8 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
-                val ret = repo.createItem(brandName,  categoryId, price)
+                val brandId = repo.getBrandId(brandName)
+                val ret = repo.createItem(brandId,  categoryId, price)
                 brandData = ret.second
             }
         }
@@ -215,8 +216,9 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
+                val brandId = repo.getBrandId(brandName)
                 val ret = repo.createItem(
-                    brandName,
+                    brandId,
                     categoryId,
                     (minPrices[categoryId] ?: 0) + 100,
                 )
@@ -233,8 +235,9 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
+                val brandId = repo.getBrandId(brandName)
                 val ret = repo.createItem(
-                    brandName,
+                    brandId,
                     categoryId,
                     (minPrices[categoryId] ?: 0) - 5,
                 )
@@ -318,8 +321,9 @@ class ExposedRepoTests {
 
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
+                val brandId = repo.getExistingBrandId(brandName)!!
                 val ret = repo.deleteItem(
-                    brandName,
+                    brandId,
                     deletingCategoryId,
                     deletingPrice,
                 )
@@ -335,8 +339,9 @@ class ExposedRepoTests {
         val categoryMinPrice = minPrices[deletingCategoryId] ?: 0
         runBlocking {
             newSuspendedTransaction(Dispatchers.IO) {
+                val brandId = repo.getExistingBrandId(brandName)!!
                 val ret = repo.deleteItem(
-                    brandName,
+                    brandId,
                     deletingCategoryId,
                     categoryMinPrice,
                 )

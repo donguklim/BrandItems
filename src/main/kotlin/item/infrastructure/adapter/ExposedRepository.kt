@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 
 @Serializable
-data class BrandData(val id: Long, val brandName: String, val price: Int)
+data class BrandData(val categoryId: Long, val brandName: String, val price: Int)
 
 class ExposedPointRepository {
 
@@ -74,22 +74,19 @@ class ExposedPointRepository {
         return categoryGroupedMap
     }
 
-    suspend fun getBrandData(brandName: String): Map<Int, Int> {
-        val minPrice = Items.price.min().alias("min_price")
+    suspend fun getBrandId(brandName: String): Long {
+        Brands.insertIgnore { it[Brands.name] = brandName }
+        return Brands.select(
+            Brands.id
+        ).where(Brands.name eq brandName).single()[Brands.id].value
 
-        val minPricePerCategory = (Items innerJoin Brands).select(
-            Items.categoryId,
-            minPrice
-        ).where(
-            Brands.name eq brandName
-        ).groupBy(Items.categoryId)
+    }
 
-        val categoryGroupedMap: Map<Int, Int> = minPricePerCategory.associateBy(
-            keySelector = { it[Items.categoryId] },
-            valueTransform = { it[minPrice]!!  }
-        )
+    suspend fun getExistingBrandId(brandName: String): Long? {
+        return Brands.select(
+            Brands.id
+        ).where(Brands.name eq brandName).singleOrNull()?.get(Brands.id)?.value
 
-        return categoryGroupedMap
     }
 
     suspend fun getBrandData(brandId: Long): Map<Int, Int> {
@@ -110,13 +107,7 @@ class ExposedPointRepository {
         return categoryGroupedMap
     }
 
-    suspend fun createItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
-
-        Brands.insertIgnore { it[Brands.name] = brandName }
-
-        val brandId = Brands.select(
-            Brands.id
-        ).where(Brands.name eq brandName).single()[Brands.id].value
+    suspend fun createItem(brandId: Long, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
 
         val brandData = getBrandData(brandId)
         Items.insertIgnore{
@@ -147,15 +138,7 @@ class ExposedPointRepository {
         return Pair(true, modifiedData)
     }
 
-    suspend fun deleteItem(brandName: String, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
-
-        val brandId = Brands.select(
-            Brands.id
-        ).where(Brands.name eq brandName).singleOrNull()?.get(Brands.id)?.value
-
-        if(brandId == null){
-            return Pair(false,mapOf())
-        }
+    suspend fun deleteItem(brandId: Long, categoryId: Int, price: Int): Pair<Boolean, Map<Int, Int>>{
 
         Items.deleteWhere{
             (Items.brandId eq brandId) and (Items.price eq price) and (Items.categoryId eq categoryId)
