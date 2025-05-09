@@ -157,7 +157,7 @@ class ExposedPointRepository {
             return Pair(false,mapOf())
         }
 
-        Items.deleteIgnoreWhere{
+        Items.deleteWhere{
             (Items.brandId eq brandId) and (Items.price eq price) and (Items.categoryId eq categoryId)
         }
         val brandData = getBrandData(brandId)

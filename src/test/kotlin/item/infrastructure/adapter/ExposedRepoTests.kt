@@ -178,7 +178,7 @@ class ExposedRepoTests {
     }
 
     @Test
-    fun testItemUpdateOnBrandTotal() {
+    fun testItemCreationOnBrandTotal() {
 
         SQLDatabase.connect()
         SQLDatabase.createTables()
@@ -259,6 +259,108 @@ class ExposedRepoTests {
         }
 
         assertEquals(expectedTotalPrice - priceChange, totalPrice)
+        transaction {
+            Items.deleteAll()
+            BrandTotalPrice.deleteAll()
+            Brands.deleteAll()
+
+        }
+    }
+
+    @Test
+    fun testItemDeletion() {
+
+        SQLDatabase.connect()
+        SQLDatabase.createTables()
+        val brandName = "dwasdf"
+
+        val minPrices = ItemCategory.entries.associate {
+            it.value to (30..190).random()
+        }
+
+        val expectedTotalPrice = minPrices.values.sum()
+
+        val deletingCategoryId = ItemCategory.ACCESSORY.value
+        val deletingPrice = minPrices[deletingCategoryId]!! + 100
+        val middlePrice = minPrices[deletingCategoryId]!! + 50
+
+        transaction {
+            Brands.insert { it[Brands.name] = brandName }
+            val brandId = Brands.select(
+                Brands.id
+            ).where(Brands.name eq brandName).single()[Brands.id].value
+
+            Items.batchInsert(minPrices.entries) {
+                this[Items.categoryId] = it.key
+                this[Items.brandId] = brandId
+                this[Items.price] = it.value
+            }
+            Items.insert {
+                it[Items.categoryId] = deletingCategoryId
+                it[Items.brandId] = brandId
+                it[Items.price] = deletingPrice
+            }
+            Items.insert {
+                it[Items.categoryId] = deletingCategoryId
+                it[Items.brandId] = brandId
+                it[Items.price] = middlePrice
+            }
+
+            BrandTotalPrice.insert {
+                it[BrandTotalPrice.brandId] = brandId
+                it[BrandTotalPrice.price] = expectedTotalPrice
+            }
+        }
+
+        val repo = ExposedPointRepository()
+        var isTotalUpdated = false
+        var brandData: Map<Int, Int> = mapOf()
+
+        runBlocking {
+            newSuspendedTransaction(Dispatchers.IO) {
+                val ret = repo.deleteItem(
+                    brandName,
+                    deletingCategoryId,
+                    deletingPrice,
+                )
+
+                isTotalUpdated = ret.first
+                brandData = ret.second
+            }
+        }
+
+        assertFalse(isTotalUpdated)
+        assertEquals(brandData.values.sum(), expectedTotalPrice)
+
+        val categoryMinPrice = minPrices[deletingCategoryId] ?: 0
+        runBlocking {
+            newSuspendedTransaction(Dispatchers.IO) {
+                val ret = repo.deleteItem(
+                    brandName,
+                    deletingCategoryId,
+                    categoryMinPrice,
+                )
+
+                isTotalUpdated = ret.first
+                brandData = ret.second
+            }
+        }
+
+        assertTrue(isTotalUpdated)
+        assertEquals(brandData.values.sum(), expectedTotalPrice + middlePrice - categoryMinPrice )
+
+        var totalPrice = 0
+        transaction {
+            totalPrice = (BrandTotalPrice innerJoin  Brands).select(
+                BrandTotalPrice.price
+            ).where(
+                Brands.name eq brandName
+            ).first()[BrandTotalPrice.price]
+
+
+        }
+
+        assertEquals(expectedTotalPrice + middlePrice - categoryMinPrice, totalPrice)
         transaction {
             Items.deleteAll()
             BrandTotalPrice.deleteAll()
