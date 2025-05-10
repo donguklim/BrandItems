@@ -2,6 +2,7 @@ package com.example
 
 import com.example.item.infrastructure.adapter.getIpAddressByHostname
 import com.example.item.service.Handler
+import com.ucasoft.ktor.simpleCache.cacheOutput
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -29,39 +30,44 @@ fun Application.configureRouting() {
         redisPort =(System.getenv("REDIS_PORT") ?: "6379").toInt()
     )
     routing {
-        get("/hello") {
-            call.respondText("Hello World!")
+        cacheOutput {
+            get("/hello") {
+                call.respondText("Hello World!")
+            }
         }
-        get("/min-prices") {
+        cacheOutput {
+            get("/min-prices") {
 
-            call.respond(handler.getMinPricePerCategory())
+                call.respond(handler.getMinPricePerCategory())
+            }
         }
         get("/brand-min-prices") {
 
             call.respond(handler.getBrandMinPrices())
         }
-        get("/min-max-price") {
-            val name = call.request.queryParameters["category"]
-            if (name == null) {
-                call.respond(HttpStatusCode.BadRequest, "Null category name")
-                return@get
+        cacheOutput {
+            get("/min-max-price") {
+                val name = call.request.queryParameters["category"]
+                if (name == null) {
+                    call.respond(HttpStatusCode.BadRequest, "Null category name")
+                    return@get
+                }
+
+                val categoryId = handler.getCategoryId(name)
+
+                if (categoryId == null) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        "Invalid category name. Valid values are: ${handler.getCategoryNames()}"
+                    )
+                    return@get
+                }
+
+                val ret = handler.getCategoryMinMaxPrices(categoryId)
+                call.respond(ret)
+
             }
-
-            val categoryId = handler.getCategoryId(name)
-
-            if (categoryId == null) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    "Invalid category name. Valid values are: ${handler.getCategoryNames()}"
-                )
-                return@get
-            }
-
-            val ret = handler.getCategoryMinMaxPrices(categoryId)
-            call.respond(ret)
-
         }
-
         post("/item") {
             val inputData = call.receive<ItemData>()
 
