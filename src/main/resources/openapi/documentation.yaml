@@ -69,5 +69,64 @@ paths:
               examples:
                 Example#1:
                   value: "Hello World!"
+
+  /item:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                brandName:
+                  type: string
+                  example: John Doe
+                categoryName:
+                  type: string
+                  example: 모자
+                price:
+                  type: integer
+                  example: 1232
+      description: "브랜드 및 상품을 추가 API"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello World!"
+
+    delete:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                brandName:
+                  type: string
+                  example: John Doe
+                categoryName:
+                  type: string
+                  example: 모자
+                price:
+                  type: integer
+                  example: 1232
+      description: "브랜드 및 상품을 삭제 API"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello World!"
 components:
   schemas: { }

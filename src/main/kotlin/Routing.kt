@@ -9,8 +9,17 @@ import io.ktor.server.plugins.swagger.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import kotlin.text.toInt
+
+@Serializable
+data class ItemData(
+    val brandName: String,
+    val categoryName: String,
+    val price: Int,
+)
+
 
 fun Application.configureRouting() {
     val handler = Handler(
@@ -52,31 +61,9 @@ fun Application.configureRouting() {
         }
 
         post("/item") {
-            val postParameters = call.receiveParameters()
-            val brandName = postParameters["brand_name"]
-            val price = postParameters["price"]?.toIntOrNull()
-            val categoryName = postParameters["category_name"]
+            val inputData = call.receive<ItemData>()
 
-            val nullParameters: MutableList<String> = mutableListOf<String>()
-
-            if(brandName==null) {
-                nullParameters.add("brand_name")
-            }
-
-            if(price==null) {
-                nullParameters.add("price")
-            }
-
-            if(categoryName==null) {
-                nullParameters.add("category_name")
-            }
-
-            if(nullParameters.size > 0){
-                call.respond(HttpStatusCode.BadRequest, "Null parameters: $nullParameters")
-                return@post
-            }
-
-            val categoryId = handler.getCategoryId(categoryName!!)
+            val categoryId = handler.getCategoryId(inputData.categoryName)
 
             if (categoryId == null) {
                 call.respond(
@@ -86,44 +73,31 @@ fun Application.configureRouting() {
                 return@post
             }
 
+            if (inputData.price <= 0) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    "price must be higher than zero"
+                )
+                return@post
+            }
+
             handler.createItem(
-                brandName!!,
+                inputData.brandName,
                 categoryId,
-                price!!
+                inputData.price
             )
 
             call.respondText(
-                "Received: Brand Name: $brandName, category: $categoryName, price: $price",
-                status = HttpStatusCode.OK
+                "Received: Brand Name: $inputData",
+                status = HttpStatusCode.Created
             )
         }
 
         delete("/item") {
-            val postParameters = call.receiveParameters()
-            val brandName = postParameters["brand_name"]
-            val price = postParameters["price"]?.toIntOrNull()
-            val categoryName = postParameters["category_name"]
 
-            val nullParameters: MutableList<String> = mutableListOf<String>()
+            val inputData = call.receive<ItemData>()
 
-            if(brandName==null) {
-                nullParameters.add("brand_name")
-            }
-
-            if(price==null) {
-                nullParameters.add("price")
-            }
-
-            if(categoryName==null) {
-                nullParameters.add("category_name")
-            }
-
-            if(nullParameters.size > 0){
-                call.respond(HttpStatusCode.BadRequest, "Null parameters: $nullParameters")
-                return@delete
-            }
-
-            val categoryId = handler.getCategoryId(categoryName!!)
+            val categoryId = handler.getCategoryId(inputData.categoryName)
 
             if (categoryId == null) {
                 call.respond(
@@ -134,13 +108,13 @@ fun Application.configureRouting() {
             }
 
             handler.deleteItem(
-                brandName!!,
+                inputData.brandName,
                 categoryId,
-                price!!
+                inputData.price,
             )
 
             call.respondText(
-                "Deleted: Brand Name: $brandName, category: $categoryName, price: $price",
+                "Deleted: Brand Name: $inputData",
                 status = HttpStatusCode.OK
             )
         }
