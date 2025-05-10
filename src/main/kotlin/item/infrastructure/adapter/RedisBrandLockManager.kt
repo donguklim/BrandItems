@@ -19,6 +19,17 @@ import kotlin.math.min
 import kotlin.properties.Delegates
 import kotlin.time.DurationUnit
 
+import java.net.InetAddress
+
+fun getIpAddressByHostname(hostname: String): String {
+    return try {
+        val address = InetAddress.getByName(hostname)
+        address.hostAddress
+    } catch (e: Exception) {
+        "Unable to resolve IP address for hostname: $hostname"
+    }
+}
+
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 class RedisBrandLockManager(host: String, port: Int = 6379, private val numBaseLocks: Int = 50){
     class Latch (

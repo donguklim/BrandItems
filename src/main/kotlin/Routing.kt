@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.item.infrastructure.adapter.getIpAddressByHostname
 import com.example.item.service.Handler
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
@@ -23,7 +24,8 @@ data class ItemData(
 
 fun Application.configureRouting() {
     val handler = Handler(
-        redisHost = System.getenv("CACHE_REDIS_HOST") ?: "localhost",
+        // use the ip address instead of hostname, because Lettuce has connection error when both app and redis are docker containers.
+        redisHost = getIpAddressByHostname(System.getenv("CACHE_REDIS_HOST") ?: "localhost"),
         redisPort =(System.getenv("REDIS_PORT") ?: "6379").toInt()
     )
     routing {

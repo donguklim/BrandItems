@@ -9,7 +9,9 @@ import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
 
 class RedisBrandLockTests {
-    private val redisHost = System.getenv("CACHE_REDIS_HOST") ?: "localhost"
+    private val redisHost = getIpAddressByHostname(
+        System.getenv("CACHE_REDIS_HOST") ?: "localhost"
+    )
     private val redisPort = (System.getenv("REDIS_PORT") ?: "6379").toInt()
 
     private fun getConnection(): StatefulRedisConnection<String, String> {
